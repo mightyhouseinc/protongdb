@@ -25,17 +25,19 @@ def enable_logging(info=False):
         format="%(name)s (%(levelname)s): %(message)s")
 
 def normalize_path(path):
-    if not path:
-        return ""
-    return path.replace('\\', '/')
+    return "" if not path else path.replace('\\', '/')
 
-def get_launch_executable(appid, appinfo)   :
+def get_launch_executable(appid, appinfo):
     app_infos = []
     for app in appinfo:
         if app["appinfo"]["appid"] == appid:
             launch_infos = app["appinfo"]["config"]["launch"]
             for launch_info in launch_infos.values():
-                if not ("config" in launch_info and "oslist" in launch_info["config"]) or ("windows" in launch_info["config"]["oslist"]):
+                if (
+                    "config" not in launch_info
+                    or "oslist" not in launch_info["config"]
+                    or "windows" in launch_info["config"]["oslist"]
+                ):
                     beta_key = None
                     if "config" in launch_info:
                         beta_key = launch_info["config"].get("betakey")
@@ -54,7 +56,7 @@ def list_to_space_str(lst):
     return ' '.join(lst)
 
 def list_to_space_str_prefix(lst, prefix):
-    return " " + list_to_space_str(lst) if lst else ""
+    return f" {list_to_space_str(lst)}" if lst else ""
 
 def safe_cast(val, to_type, default=None):
     try:
@@ -134,18 +136,17 @@ def main(args=None):
     else:
         for x in range(0, len(app_infos)):
             description, working_dir, launch_executable, beta_key, app_config_args = app_infos[x]
-            beta_key = None
             beta_str = ""
-            if beta_key:
+            if beta_key := None:
                 beta_str = f" | Beta: {beta_key} |"
             print(f"[{x}] {description} ({launch_executable}{list_to_space_str_prefix(app_config_args, ' ')}){beta_str}")
-        config_idx = safe_cast(input(f"Select a game configuration to run: "), int)
+        config_idx = safe_cast(input("Select a game configuration to run: "), int)
         print(config_idx)
-        if config_idx == None or config_idx not in range(0, len(app_infos)):
+        if config_idx is None or config_idx not in range(0, len(app_infos)):
             logger.error("Invalid app configuration.")
             return
         _, working_dir, launch_executable, beta_key, app_config_args = app_infos[config_idx]
-            
+
     # Dump wine-reload in /tmp so we can source
     # it from the gdb script.
     urllib.request.urlretrieve(
